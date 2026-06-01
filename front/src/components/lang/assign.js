@@ -1,0 +1,57 @@
+const t = {
+  en: {
+    submit: "Submit Assessment",
+    cancel: "Cancel",
+    loading: "Loading Questions...",
+    submitting: "Submitting...",
+    clarity: "Clarity Assessment",
+    interest: "Interest Assessment",
+    phase1: "Phase 1",
+    phase2: "Phase 2",
+    inProgress: "In Progress",
+    completed: "Completed",
+    locked: "Locked",
+    completeFirst: "Complete Clarity Assessment First",
+    answerAll: "Please answer all questions",
+    assessmentComplete: "Assessment Complete!",
+    retake: "Retake Assessment",
+    startAssessment: "Start Assessment",
+    questions: "Question",
+    status: "Status",
+    heading: "Career Assignment",
+    subheading: "Complete both phases to get insights",
+    clarityscore: "Clarity Score",
+    interestscore: "Interest Score",
+    overallscore: "Overall Score",
+    YourAssessmentResults: "Your Assessment Results"
+  },
+  hi: {
+    submit: "मूल्यांकन जमा करें",
+    cancel: "रद्द करें",
+    loading: "प्रश्न लोड हो रहे हैं...",
+    submitting: "जमा किया जा रहा है...",
+    clarity: "स्पष्टता मूल्यांकन",
+    interest: "रुचि मूल्यांकन",
+    phase1: "चरण 1",
+    phase2: "चरण 2",
+    inProgress: "प्रक्रिया में",
+    completed: "पूर्ण",
+    locked: "बंद",
+    completeFirst: "पहले स्पष्टता मूल्यांकन पूरा करें",
+    answerAll: "कृपया सभी प्रश्नों का उत्तर दें",
+    assessmentComplete: "मूल्यांकन पूर्ण!",
+    retake: "मूल्यांकन दोबारा लें",
+    startAssessment: "मूल्यांकन शुरू करें",
+    questions: "सवाल",
+    status: "स्थिति",
+    heading: "करियर आकलन",
+    subheading: "सुझाव प्राप्त करने के लिए दोनों चरण पूरे करें",
+    clarityscore: "स्पष्टता स्कोर",
+    interestscore: "रुचि स्कोर",
+    overallscore: "कुल स्कोर",
+    YourAssessmentResults: "आपके मूल्यांकन परिणाम"
+  }
+};
+
+
+export default t;

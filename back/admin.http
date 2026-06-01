@@ -1,0 +1,56 @@
+
+### Bootstrap first admin
+POST http://localhost:5000/bootstrap-admin
+Content-Type: application/json
+
+{
+  "name": "Super Admin",
+  "email": "abcd@gmail.com",
+  "phone": "7354657578",
+  "password": "Abcd@123"
+}
+
+###
+
+POST http://localhost:5000/test
+Content-Type: application/json
+
+{
+  "name": "Lav"
+}
+
+### Token
+POST http://localhost:3000/signup
+Content-Type: application/json
+
+{
+  "name": "Super Admin",
+  "email": "priyanka.professionalwork@gmail.com",
+  "phone": "7354657578",
+  "password": "StrongPassword123!"
+}
+
+### Create Admin Invite
+POST http://localhost:4000/admin/invite
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NDA5YWE1MzY5YWIyNTM5YWVkZjBlNCIsImVtYWlsIjoicHJpeWFua2EucHJvZmVzc2lvbmFsd29ya0BnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjYwMzE4MjEsImV4cCI6MTc2NjYzNjYyMX0.qk5DU-rSz0qzKdBBsJRi6iEcx8gkTLts-xIQhO0XLts
+
+{
+  "email": "priyanka369run97531@gmail.com"
+}
+
+###
+
+/**
+  "message": "Admin invite created",
+  "inviteLink": "http://localhost:5173/signup?adminInvite=dc8084365551017fadf3e6a83ebb43aa17f5b0af4cb9335e051b39235fdbd943",
+  "expiresAt": "2025-12-17T00:03:33.670Z"
+*/
+
+
+
+###
+
+### Get messages for a specific user
+GET http://localhost:4000/messages
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5NDA5YWE1MzY5YWIyNTM5YWVkZjBlNCIsImVtYWlsIjoicHJpeWFua2EucHJvZmVzc2lvbmFsd29ya0BnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NjU4NDMyOTEsImV4cCI6MTc2NjQ0ODA5MX0.LO009A_cJsOEQrPeqUvIjbVLDOG5MZXkEYsI0WT1UfI
