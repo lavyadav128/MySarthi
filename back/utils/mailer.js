@@ -1,32 +1,54 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-/* ---------------- ENV VARIABLES ----------------
-   Render (and most free hosts) block outbound SMTP ports 587/465, so
-   nodemailer + Gmail SMTP will ALWAYS time out there even with correct
-   credentials. Resend sends over normal HTTPS (443), which is never
-   blocked, so we use their HTTP API instead of raw SMTP.
-------------------------------------------------- */
+/* ---------------- ENV VARIABLES ---------------- */
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.gmail.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
 
-// Fallback sender: Resend's shared test address works with zero setup,
-// but can only send to the email you signed up to Resend with. For real
-// users, set MAIL_FROM to an address on a domain you've verified in the
-// Resend dashboard, e.g. MAIL_FROM="MySaarthi <noreply@yourdomain.com>"
-const MAIL_FROM = process.env.FROM_EMAIL || process.env.MAIL_FROM || "MySaarthi <onboarding@resend.dev>";
-if (!RESEND_API_KEY) {
+if (!SMTP_USER || !SMTP_PASS) {
+  // Don't crash the whole server on boot — log loudly instead so the rest
+  // of the app (login, profiles, etc.) still works even if email is broken.
   console.error(
-    "⚠️  RESEND_API_KEY is not set. Verification emails will fail until this is configured in your environment variables (Render dashboard → Environment)."
+    "⚠️  SMTP_USER / SMTP_PASS are not set. Verification emails will fail until these are configured in your environment variables (e.g. Render/Railway dashboard, not just a local .env file)."
   );
 }
 
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+/* ---------------- CREATE TRANSPORTER ---------------- */
 
-console.log(
-  RESEND_API_KEY
-    ? "✅ Resend email client ready"
-    : "❌ Resend email client NOT configured (missing RESEND_API_KEY)"
-);
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+
+  // true ONLY for port 465
+  secure: SMTP_PORT === 465,
+
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASS,
+  },
+
+  tls: {
+    rejectUnauthorized: false,
+  },
+
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
+});
+
+/* ---------------- VERIFY SMTP CONNECTION ---------------- */
+
+(async () => {
+  try {
+    await transporter.verify();
+    console.log("✅ SMTP Server Ready");
+  } catch (error) {
+    console.error("❌ SMTP Verification Failed");
+    console.error(error);
+  }
+})();
 
 /* ---------------- SEND OTP EMAIL ---------------- */
 
@@ -36,13 +58,18 @@ export const sendEmailOTP = async ({ to, otp }) => {
       throw new Error("Email or OTP missing");
     }
 
-    if (!resend) {
+    if (!SMTP_USER || !SMTP_PASS) {
       throw new Error(
-        "Resend is not configured on this server (RESEND_API_KEY env var missing)."
+        "SMTP credentials are not configured on this server (SMTP_USER/SMTP_PASS env vars missing)."
       );
     }
 
-    const html = `
+    const mailOptions = {
+      from: `"MySaarthi" <${SMTP_USER}>`,
+      to,
+      subject: "Verify your email",
+
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin:auto; padding:20px;">
           
           <h2 style="color:#333;">Email Verification</h2>
@@ -75,26 +102,17 @@ export const sendEmailOTP = async ({ to, otp }) => {
           </p>
 
         </div>
-      `;
+      `,
+    };
 
-    const { data, error: resendError } = await resend.emails.send({
-      from: MAIL_FROM,
-      to,
-      subject: "Verify your email",
-      html,
-    });
-
-    if (resendError) {
-      // Resend returns errors as a data field instead of throwing
-      throw new Error(resendError.message || JSON.stringify(resendError));
-    }
+    const info = await transporter.sendMail(mailOptions);
 
     console.log("✅ OTP Email Sent");
-    console.log("📩 Message ID:", data?.id);
+    console.log("📩 Message ID:", info.messageId);
 
     return {
       success: true,
-      messageId: data?.id,
+      messageId: info.messageId,
     };
   } catch (error) {
     console.error("❌ Failed to send OTP email");
