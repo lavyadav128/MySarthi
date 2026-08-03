@@ -4,6 +4,7 @@ import path from "path";
 
 // OR for ESM (import)
 import dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first'); // add this line
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 import connectDB from "./config/db.js";
