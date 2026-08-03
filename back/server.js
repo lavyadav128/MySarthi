@@ -34,7 +34,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   : [
       "http://localhost:3000",
       "http://localhost:5173",
-      "https://mysarthii.onrender.com", // <-- replace with your real frontend URL
+      // "https://mysarthii.onrender.com", // <-- replace with your real frontend URL
     ];
 
 const corsOptions = {
