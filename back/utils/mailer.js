@@ -8,7 +8,11 @@ const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 
 if (!SMTP_USER || !SMTP_PASS) {
-  throw new Error("❌ SMTP credentials missing in .env");
+  // Don't crash the whole server on boot — log loudly instead so the rest
+  // of the app (login, profiles, etc.) still works even if email is broken.
+  console.error(
+    "⚠️  SMTP_USER / SMTP_PASS are not set. Verification emails will fail until these are configured in your environment variables (e.g. Render/Railway dashboard, not just a local .env file)."
+  );
 }
 
 /* ---------------- CREATE TRANSPORTER ---------------- */
@@ -52,6 +56,12 @@ export const sendEmailOTP = async ({ to, otp }) => {
   try {
     if (!to || !otp) {
       throw new Error("Email or OTP missing");
+    }
+
+    if (!SMTP_USER || !SMTP_PASS) {
+      throw new Error(
+        "SMTP credentials are not configured on this server (SMTP_USER/SMTP_PASS env vars missing)."
+      );
     }
 
     const mailOptions = {

@@ -66,7 +66,7 @@ if (exists) {
         otpObj.codeHash = otpHash;
         otpObj.expiresAt = new Date(Date.now() + 5 * 60 * 1000);
         otpObj.attempts = 0;
-        
+        otpObj.lastSentAt = new Date();
       } else {
         authSec.otps.push({
           codeHash: otpHash,
@@ -74,6 +74,7 @@ if (exists) {
           expiresAt: new Date(Date.now() + 5 * 60 * 1000),
           attempts: 0,
           verified: false,
+          lastSentAt: new Date(),
         });
       }
       await authSec.save();
@@ -88,7 +89,15 @@ if (exists) {
     }
     const email = cleanEmail(email);
 
-    await sendEmailOTP({ to: email, otp });
+    const emailResult = await sendEmailOTP({ to: email, otp });
+
+    if (!emailResult.success) {
+      console.error("SIGNUP (existing unverified user): Failed to send email:", emailResult.error);
+      return res.status(502).json({
+        error: "Couldn't send the verification email. Please try again in a moment.",
+        userId: exists._id,
+      });
+    }
 
     return res.status(200).json({
       message: "OTP resent. Please check your email to verify.",
@@ -175,14 +184,20 @@ if (exists) {
     });
 
     /* ---------- SEND EMAIL OTP ---------- */
-    await sendEmailOTP({
+    const emailResult = await sendEmailOTP({
       to: user.email,
       otp,
     });
 
-    // if (process.env.NODE_ENV !== "production") {
-    //   console.log("EMAIL OTP (DEV):", otp);
-    // }
+    if (!emailResult.success) {
+      // Don't silently pretend it worked — surface the real reason so the
+      // frontend/user knows verification email did NOT go out.
+      console.error("SIGNUP: Failed to send verification email:", emailResult.error);
+      return res.status(502).json({
+        error: "Account created, but we couldn't send the verification email. Please try 'Resend OTP' in a moment, or contact support.",
+        userId: user._id,
+      });
+    }
 
     res.status(201).json({
       message: "Signup successful. Verify your email using OTP.",
@@ -259,24 +274,32 @@ router.post("/resend-otp", async (req, res) => {
 
     if (!otpObj) return res.status(400).json({ error: "No valid OTP to resend" });
 
+    // Check cooldown FIRST, before mutating anything
+    const lastSentAt = otpObj.lastSentAt || new Date(0);
+    if (Date.now() - new Date(lastSentAt).getTime() < 60 * 1000) {
+      return res.status(429).json({ error: "Please wait 1 minute before resending OTP" });
+    }
+
     // Generate new OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
     const otpHash = await bcrypt.hash(otp, 12);
 
     otpObj.codeHash = otpHash;
-    
-    const lastSentAt = otpObj.lastSentAt || new Date(0);
-
-    if (Date.now() - lastSentAt.getTime() < 60 * 1000) {
-      return res.status(429).json({ error: "Please wait 1 minute before resending OTP" });
-    }
-
     otpObj.attempts = 0;
+    otpObj.lastSentAt = new Date();
+    otpObj.expiresAt = new Date(Date.now() + 5 * 60 * 1000); // reset expiry on every resend
 
     await authSec.save();
 
     // Send email
-    await sendEmailOTP({ to: user.email, otp });
+    const emailResult = await sendEmailOTP({ to: user.email, otp });
+
+    if (!emailResult.success) {
+      console.error("RESEND-OTP: Failed to send email:", emailResult.error);
+      return res.status(502).json({
+        error: "Could not send OTP email right now. Please try again shortly.",
+      });
+    }
 
     res.json({ message: "OTP resent successfully" });
   } catch (err) {

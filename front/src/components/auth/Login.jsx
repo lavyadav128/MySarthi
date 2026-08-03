@@ -50,6 +50,21 @@ function Login() {
       /* ---------- EMAIL NOT VERIFIED ---------- */
       if (res.status === 403 && data.error === "Email not verified") {
         sessionStorage.setItem("verify_email", form.email);
+
+        // Automatically send a fresh OTP so the user isn't dropped on the
+        // verify page with nothing in their inbox (their old signup OTP
+        // may have already expired or never arrived).
+        try {
+          await fetch(`${API_BASE}/resend-otp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
+          });
+        } catch (otpErr) {
+          console.error("Auto resend-otp on login redirect failed:", otpErr);
+          // Non-fatal — user can still hit "Resend OTP" manually on the next screen.
+        }
+
         navigate("/verify-email", { replace: true });
         return;
       }
